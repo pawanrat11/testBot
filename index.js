@@ -1,53 +1,35 @@
 const express = require('express');
+const {WebhookClient} = require('dialogflow-fulfillment');
+const { welcome, defaultFallback, demo } = require("./intents/medicine");
 const app = express();
+const mongoose = require('mongoose');
+
+const db = mongoose.connect('mongodb://localhost:27017/cancerpain');
 app.use(express.json());
 
-const diff = require('dialogflow-fulfillment'); // dialogflow FF
-// var mongo = require('mongodb'); // mongoDB
-var MongoClient = require('mongodb').MongoClient;
-var url = "mongodb://localhost:27017/";
-
-// const request = require("request-promise");
-// process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
-
-// Connect to the db
-
-MongoClient.connect(url, function(err, db) {
-  if (err) throw err;
-  var dbo = db.db("cancerpain");
-  dbo.createCollection("test", function(err, res) {
-    if (err) throw err;
-    console.log("Collection created!");
-    db.close();
-  });
-});
-
 app.get('/', (req, res) => {
-  res.send('Hello World T')
+    res.send("Server Is Working......");
 });
 
-app.post('/', (req, res) => {
-  const agent = new diff.WebhookClient({
-    request: req,
-    response: res
-  });
-  
-  function demo(agent){
-    agent.add("send from webhook");
-  }
-  
-  var intentMap = new Map();
-  intentMap.set('webhookDemo', demo);
-  agent.handleRequest(intentMap);
+/**
+* on this route dialogflow send the webhook request
+* For the dialogflow we need POST Route.
+* */
+app.post('/webhook', (req, res) => {
+    // get agent from request
+    const agent = new WebhookClient({request: req, response: res});
+    // create intentMap for handle intent
+    let intentMap = new Map();
+    // add intent map 2nd parameter pass function
+    intentMap.set('Medicine',welcome);
+    intentMap.set('demo',demo);
+    // now agent is handle request and pass intent map
+    agent.handleRequest(intentMap);
 });
 
-  //Test get value of WebhookClient
-  // console.log('agentVersion: ' + agent.agentVersion);
-  // console.log('intent: ' + agent.intent);
-  // console.log('locale: ' + agent.locale);
-  // console.log('query: ', agent.query);
-  // console.log('session: ', agent.session);
-
+/**
+* server on port number 3000 
+* */
 app.listen(3000, () => {
-  console.log('Start server at port 3000.')
-});
+    console.log("Server is Running on port 3000");
+})
